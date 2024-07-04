@@ -7,6 +7,18 @@ ___
 </code>
 
 ___
+### Requirements
+numpy  
+matplotlib  
+opencv  
+tifffile  
+pytorch  
+tabulate  
+torchkbnufft  
+hyperspy  
+ipywidgets  
+scikit-image  
+___
 
 ### Citation
 
