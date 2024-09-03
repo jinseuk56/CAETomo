@@ -1,3 +1,8 @@
+# 1D Convolutional Autoencoder (1D-CAE) for feature extraction from spectrum images
+# A CUDA device can be used
+# Jinseok Ryu (jinseuk56@gmail.com)
+# 
+
 import time
 from drca import drca, reshape_coeff
 import numpy as np

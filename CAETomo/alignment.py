@@ -1,3 +1,7 @@
+# Tilt Axis Alignment
+# Jinseok Ryu (jinseuk56@gmail.com)
+# 
+
 import numpy as np
 import matplotlib.pyplot as plt
 import tifffile
