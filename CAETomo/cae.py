@@ -1,5 +1,4 @@
 import time
-import hyperspy.api as hys
 from drca import drca, reshape_coeff
 import numpy as np
 import matplotlib.pyplot as plt

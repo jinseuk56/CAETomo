@@ -392,6 +392,9 @@ class tilt_series_alignment():
 
         fig, ax = plt.subplots(1, 1)
         ax.scatter(self.psh[:, 0], self.psh[:, 1], c=np.arange(self.num_img), cmap="inferno")
+        for i in range(self.num_img):
+            ax.text(self.psh[i, 0], self.psh[i, 1], '%d'%(i+1))
+        fig.suptitle("Calculated Shift")
         fig.tight_layout()
         plt.show()
 
