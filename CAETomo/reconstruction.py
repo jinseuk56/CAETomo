@@ -1,7 +1,7 @@
 # Tomographic Reconstruction with Compressed Sensing Electron Tomography (CS-ET)
 # A CUDA device can be used
 # Jinseok Ryu (jinseuk56@gmail.com)
-# 
+# https://doi.org/10.1021/acsnano.4c10677
 
 import numpy as np
 import matplotlib.pyplot as plt
