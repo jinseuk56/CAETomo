@@ -6,6 +6,7 @@ ___
 </code>
 ___
 ### Requirements
+`These packages will not be automatically installed with CAETomo`  
 numpy  
 matplotlib  
 opencv  
