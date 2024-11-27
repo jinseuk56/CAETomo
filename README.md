@@ -23,8 +23,9 @@ ___
 author = {Jo, J., Ryu, J., Huh, J.-H., Kim, H., Seo, D. H., Lee, J., Kwon, M., Lee, S., Nam, K. T., Kim M.},<br>
 title = {Direct three-dimensional observation of the plasmonic near-fields of a nanoparticle with circular dichroism},<br>
 journal = {ACS Nano},<br>
-volume = {},<br>
-pages = {},<br>
+volume = {18},<br>
+Issue = {47},<br>
+pages = {32769–32780},<br>
 year = {2024},<br>
 doi = {[https://doi.org/10.1021/acsnano.4c10677](https://doi.org/10.1021/acsnano.4c10677)}
 }
