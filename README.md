@@ -6,17 +6,17 @@ ___
 </code>
 ___
 ### Requirements
-`These packages will not be automatically installed with CAETomo`  
-numpy  
-matplotlib  
-opencv  
-tifffile  
-pytorch  
-tabulate  
-torchkbnufft  
-hyperspy  
-ipywidgets  
-scikit-image  
+These packages will not be automatically installed with CAETomo  
+`numpy`  
+`matplotlib`  
+`opencv`  
+`tifffile`  
+`pytorch`  
+`tabulate`  
+`torchkbnufft`  
+`hyperspy`  
+`ipywidgets`  
+`scikit-image`  
 ___
 ### Citation
 @article{jo2024eelstomo,<br>
