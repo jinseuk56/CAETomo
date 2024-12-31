@@ -6,17 +6,19 @@ ___
 </code>
 ___
 ### Requirements
-These packages will not be automatically installed with CAETomo  
+`# Generally required`  
 `numpy`  
 `matplotlib`  
-`opencv`  
 `tifffile`  
+`# Tilt axis alignment`  
+`opencv`  
+`ipywidgets`  
+`scikit-image`  
+`# Feature extraction and reconstruction`  
+`drca # automatically installed with CAETomo`  
 `pytorch`  
 `tabulate`  
 `torchkbnufft`  
-`hyperspy`  
-`ipywidgets`  
-`scikit-image`  
 ___
 ### Citation
 @article{jo2024eelstomo,<br>
