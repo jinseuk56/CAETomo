@@ -1,5 +1,6 @@
 # CAETomo
 The codes presented here are developed for EELS tomography data processing; the tilt axis alignment, feature map tilt series production and tomographic reconstruction can be achieved.
+![schematic](img/schematic.png)
 ___
 ### How to install
 <code>pip install CAETomo  
