@@ -29,9 +29,8 @@ ___
 `torchkbnufft`  
 ___
 ### Application examples
-1) Jo, J., Ryu, J., Huh, J. H., Kim, H., Seo, D. H., Lee, J., ... & Kim, M. (2024). Direct three-dimensional observation of the plasmonic near-fields of a nanoparticle with circular dichroism. ACS nano, 18(47), 32769-32780.
-2) Jo, J., Ali, A., Han, J. H., Kwon, J. H., Nam, K. T., Yi, G. C., & Kim, M. (2025). Comprehending nonmonochromatic plasmonic behavior of metal nanoparticles on dielectric nanowires using monochromated EELS. Physical Review Materials, 9(12), 125202.
-
+1) Jo, J., et al., Direct Three-Dimensional Observation of the Plasmonic Near-Fields of a Nanoparticle with Circular Dichroism. ACS Nano, 2024. 18(47): p. 32769-32780.
+2) Jo, J., et al., Comprehending nonmonochromatic plasmonic behavior of metal nanoparticles on dielectric nanowires using monochromated EELS. Physical Review Materials, 2025. 9(12).
 ___
 ### Citation
 @article{jo2024eelstomo,<br>
