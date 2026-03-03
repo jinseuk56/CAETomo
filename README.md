@@ -7,10 +7,11 @@ ___
 conda activate caetomo  
 pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126  
 pip install torchkbnufft  
-pip install tabulate  
-pip install scikit-image  
+conda install -c conda-forge tabulate  
+conda install -c conda-forge scikit-image  
 conda install -c conda-forge opencv  
-pip install hyperspy  
+conda install -c conda-forge hyperspy  
+pip install caetomo
 </code>
 ___
 ### Requirements
