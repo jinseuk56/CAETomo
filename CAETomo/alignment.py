@@ -11,7 +11,6 @@ import scipy.signal as signal
 from skimage.registration import phase_cross_correlation
 import cv2
 
-
 class slice_viewer:
     def __init__(self, ax, X):
         self.ax = ax
@@ -248,6 +247,214 @@ class tilt_series_alignment():
         self.fig.canvas.draw()
         self.fig.tight_layout()
             
+    def preview_streamlit_filter(self, snum, xp, yp, w, h, lc, hc, stretch_x, stretch_y, hw, gas_k, gas_s, gas_h, lap_k, sob_k, sch_a):
+        
+        fig = plt.figure(figsize=(10, 5))
+        G = gridspec.GridSpec(4, 8)
+        ax1 = fig.add_subplot(G[:2, :2])
+        ax2 = fig.add_subplot(G[:2, 2:4])
+        ax3 = fig.add_subplot(G[:2, 4:6])
+        ax4 = fig.add_subplot(G[2:, :2])
+        ax5 = fig.add_subplot(G[2:, 2:4])
+        ax6 = fig.add_subplot(G[2:, 4:6])
+        ax7 = fig.add_subplot(G[:2, 6:8])
+        ax8 = fig.add_subplot(G[2:, 6:8])
+
+        ax1.imshow(self.data[snum-1], cmap="gray")
+        ax2.imshow(self.data[snum], cmap="gray")
+        ax3.imshow(self.data[snum+1], cmap="gray")
+
+        bandpass = radial_indices(self.modulus.shape[1:], [lc, hc])
+
+        filter_0 = np.abs(np.fft.ifft2(np.fft.fftshift(np.multiply(self.fft_stack[snum-1], bandpass))))
+        filter_1 = np.abs(np.fft.ifft2(np.fft.fftshift(np.multiply(self.fft_stack[snum], bandpass))))
+        filter_2 = np.abs(np.fft.ifft2(np.fft.fftshift(np.multiply(self.fft_stack[snum+1], bandpass))))
+
+        filter_0 = filter_0[yp:(yp+h), xp:(xp+w)]
+        filter_1 = filter_1[yp:(yp+h), xp:(xp+w)]
+        filter_2 = filter_2[yp:(yp+h), xp:(xp+w)]
+
+        if stretch_x:
+            filter_0 = cos_stretch(filter_0, self.angles[snum-1], orientation="x")
+            filter_1 = cos_stretch(filter_1, self.angles[snum], orientation="x")        
+            filter_2 = cos_stretch(filter_2, self.angles[snum+1], orientation="x")    
+
+        if stretch_y:
+            filter_0 = cos_stretch(filter_0, self.angles[snum-1], orientation="y")
+            filter_1 = cos_stretch(filter_1, self.angles[snum], orientation="y")        
+            filter_2 = cos_stretch(filter_2, self.angles[snum+1], orientation="y")
+
+        cr_shape = filter_1.shape
+
+        if hw:
+            han_win = hanning_2d(cr_shape)
+            filter_0 = np.multiply(filter_0, han_win)
+            filter_1 = np.multiply(filter_1, han_win)
+            filter_2 = np.multiply(filter_2, han_win)
+
+        if gas_k:
+            if gas_h:
+                filter_0 = filter_0 - cv2.GaussianBlur(filter_0, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+                filter_1 = filter_1 - cv2.GaussianBlur(filter_1, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+                filter_2 = filter_2 - cv2.GaussianBlur(filter_2, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+            else:
+                filter_0 = cv2.GaussianBlur(filter_0, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+                filter_1 = cv2.GaussianBlur(filter_1, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+                filter_2 = cv2.GaussianBlur(filter_2, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+
+        if lap_k:
+            filter_0 = cv2.Laplacian(filter_0, ddepth=-1, ksize=lap_k)
+            filter_1 = cv2.Laplacian(filter_1, ddepth=-1, ksize=lap_k)
+            filter_2 = cv2.Laplacian(filter_2, ddepth=-1, ksize=lap_k)
+
+        cv_dt = cv2.CV_16U
+        if sob_k:
+            filter_0 = sobel_xy(filter_0, sob_k, cv_dt)
+            filter_1 = sobel_xy(filter_1, sob_k, cv_dt)
+            filter_2 = sobel_xy(filter_2, sob_k, cv_dt)
+
+        if sch_a:
+            filter_0 = scharr_xy(filter_0, cv_dt)
+            filter_1 = scharr_xy(filter_1, cv_dt)
+            filter_2 = scharr_xy(filter_2, cv_dt)
+
+        ax4.imshow(filter_0, cmap="gray")
+        ax5.imshow(filter_1, cmap="gray")
+        ax6.imshow(filter_2, cmap="gray")
+
+        xcorr_l = np.fft.fftshift(np.fft.ifft2(np.fft.fft2(filter_1) * np.fft.fft2(filter_0).conj()))
+        xcorr_r = np.fft.fftshift(np.fft.ifft2(np.fft.fft2(filter_1) * np.fft.fft2(filter_2).conj()))
+        
+        ax7.imshow(xcorr_l.real, cmap="gray")
+        ax8.imshow(xcorr_r.real, cmap="gray")
+
+        ax1.set_title("tilt series No.%d"%(snum))
+        ax2.set_title("tilt series No.%d"%(snum+1))
+        ax3.set_title("tilt series No.%d"%(snum+2))
+        ax4.set_title("filtered")
+        ax5.set_title("filtered")
+        ax6.set_title("filtered")
+        ax7.set_title("cross correlation (left)")
+        ax8.set_title("cross correlation (right)")
+
+        for axis in [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8]:
+            axis.axis("off")
+
+        fig.tight_layout()
+        return fig
+
+
+    def apply_streamlit_shift(self, lp, hp, yi, xi, hi, wi, stretch_x, stretch_y, hw, gas_k, gas_s, gas_h, lap_k, sob_k, sch_a):
+        bpss = radial_indices(self.modulus.shape[1:], [lp, hp])
+        ref_num = int(self.num_img/2)
+        psh_r = []
+        psh_l = []
+
+        for i in range(ref_num, self.num_img-1, 1):
+            filter_1 = np.abs(np.fft.ifft2(np.fft.fftshift(np.multiply(self.fft_stack[i], bpss))))
+            filter_2 = np.abs(np.fft.ifft2(np.fft.fftshift(np.multiply(self.fft_stack[i+1], bpss))))
+
+            if stretch_x:
+                filter_1 = cos_stretch(filter_1, self.angles[i], orientation="x")        
+                filter_2 = cos_stretch(filter_2, self.angles[i+1], orientation="x")
+            if stretch_y:
+                filter_1 = cos_stretch(filter_1, self.angles[i], orientation="y")        
+                filter_2 = cos_stretch(filter_2, self.angles[i+1], orientation="y")
+
+            filter_1 = filter_1[yi:(yi+hi), xi:(xi+wi)]
+            filter_2 = filter_2[yi:(yi+hi), xi:(xi+wi)]
+
+            cr_shape = filter_1.shape
+
+            if hw:
+                han_win = hanning_2d(cr_shape)
+                filter_1 = np.multiply(filter_1, han_win)
+                filter_2 = np.multiply(filter_2, han_win)
+
+            if gas_k:
+                if gas_h:
+                    filter_1 = filter_1 - cv2.GaussianBlur(filter_1, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+                    filter_2 = filter_2 - cv2.GaussianBlur(filter_2, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+                else:
+                    filter_1 = cv2.GaussianBlur(filter_1, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+                    filter_2 = cv2.GaussianBlur(filter_2, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+
+            if lap_k:
+                filter_1 = cv2.Laplacian(filter_1, ddepth=-1, ksize=lap_k)
+                filter_2 = cv2.Laplacian(filter_2, ddepth=-1, ksize=lap_k)
+
+            cv_dt = cv2.CV_16U
+            if sob_k:
+                filter_1 = sobel_xy(filter_1, sob_k, cv_dt)
+                filter_2 = sobel_xy(filter_2, sob_k, cv_dt)
+
+            if sch_a:
+                filter_1 = scharr_xy(filter_1, cv_dt)
+                filter_2 = scharr_xy(filter_2, cv_dt)
+
+            psh_tmp, _, _ = phase_cross_correlation(filter_1, filter_2, upsample_factor=100)
+            psh_r.append(psh_tmp)
+
+        for i in range(ref_num, 0, -1):
+            filter_1 = np.abs(np.fft.ifft2(np.fft.fftshift(np.multiply(self.fft_stack[i], bpss))))
+            filter_2 = np.abs(np.fft.ifft2(np.fft.fftshift(np.multiply(self.fft_stack[i-1], bpss))))
+
+            if stretch_x:
+                filter_1 = cos_stretch(filter_1, self.angles[i], orientation="x")        
+                filter_2 = cos_stretch(filter_2, self.angles[i+1], orientation="x")
+            if stretch_y:
+                filter_1 = cos_stretch(filter_1, self.angles[i], orientation="y")        
+                filter_2 = cos_stretch(filter_2, self.angles[i+1], orientation="y")
+
+            filter_1 = filter_1[yi:(yi+hi), xi:(xi+wi)]
+            filter_2 = filter_2[yi:(yi+hi), xi:(xi+wi)]
+
+            cr_shape = filter_1.shape
+
+            if hw:
+                han_win = hanning_2d(cr_shape)
+                filter_1 = np.multiply(filter_1, han_win)
+                filter_2 = np.multiply(filter_2, han_win)
+
+            if gas_k:
+                if gas_h:
+                    filter_1 = filter_1 - cv2.GaussianBlur(filter_1, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+                    filter_2 = filter_2 - cv2.GaussianBlur(filter_2, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+                else:
+                    filter_1 = cv2.GaussianBlur(filter_1, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+                    filter_2 = cv2.GaussianBlur(filter_2, ksize=(gas_k, gas_k), sigmaX=gas_s, sigmaY=gas_s)
+
+            if lap_k:
+                filter_1 = cv2.Laplacian(filter_1, ddepth=-1, ksize=lap_k)
+                filter_2 = cv2.Laplacian(filter_2, ddepth=-1, ksize=lap_k)
+
+            cv_dt = cv2.CV_16U
+            if sob_k:
+                filter_1 = sobel_xy(filter_1, sob_k, cv_dt)
+                filter_2 = sobel_xy(filter_2, sob_k, cv_dt)
+
+            if sch_a:
+                filter_1 = scharr_xy(filter_1, cv_dt)
+                filter_2 = scharr_xy(filter_2, cv_dt)
+
+            psh_tmp, _, _ = phase_cross_correlation(filter_1, filter_2, upsample_factor=100)
+            psh_l.append(psh_tmp)
+            
+        psh_r_tmp = np.cumsum(psh_r, axis=0).tolist()
+        psh_l_tmp = np.flip(np.cumsum(psh_l, axis=0), axis=0).tolist()
+        psh = []
+        psh.extend(psh_l_tmp)
+        psh.append([0.0, 0.0])
+        psh.extend(psh_r_tmp)
+        self.psh = np.asarray(psh)
+
+        fig, ax = plt.subplots(1, 1)
+        ax.scatter(self.psh[:, 0], self.psh[:, 1], c=np.arange(self.num_img), cmap="inferno")
+        for i in range(self.num_img):
+            ax.text(self.psh[i, 0], self.psh[i, 1], '%d'%(i+1))
+        fig.suptitle("Calculated Shift")
+        fig.tight_layout()
+        return fig
 
     def calculate_shift(self):
         

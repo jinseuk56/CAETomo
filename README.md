@@ -14,6 +14,13 @@ conda install -c conda-forge hyperspy
 pip install caetomo
 </code>
 ___
+
+### Graphical User Interface (GUI)
+An interactive, Streamlit-based web interface for a completely code-free analysis pipeline is provided. Once the package is installed, simply open your terminal and run:  
+
+`caetomo-gui`  
+
+___
 ### Requirements
 `# Generally required`  
 `numpy`  

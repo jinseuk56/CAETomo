@@ -4,7 +4,7 @@
 # https://doi.org/10.1021/acsnano.4c10677
 
 import time
-from drca import drca, reshape_coeff
+from drca import drca
 import numpy as np
 import matplotlib.pyplot as plt
 import tifffile
@@ -209,7 +209,7 @@ class cae():
                 for j in range(self.load_data.num_img):
                     tilt_series.append(self.coeffs_reshape[j][:, :, i].astype(np.float32))
                 tilt_series = np.asarray(tilt_series)
-                tifffile.imsave(save_prefix+"_SC_%02d_feature_maps.tif"%(np.where(peak_order==i)[0][0]), tilt_series)
+                tifffile.imwrite(save_prefix+"_SC_%02d_feature_maps.tif"%(np.where(peak_order==i)[0][0]), tilt_series)
             tifffile.imwrite(save_prefix+"spectral_component.tif", self.ae_comp_vectors)
             tifffile.imwrite(save_prefix+"feature_maps.tif", self.coeffs_reshape)
             print("Saving completed.")
@@ -255,3 +255,18 @@ class linFE_decoder(nn.Module):
         
     def forward(self, z):       
         return self.decoder(z)
+    
+
+def reshape_coeff(coeffs, new_shape):
+    """
+    reshape a coefficient matrix to restore the original scanning shapes.
+    """
+    coeff_reshape = []
+    for i in range(len(new_shape)):
+        temp = coeffs[:int(new_shape[i, 0]*new_shape[i, 1]), :]
+        coeffs = np.delete(coeffs, range(int(new_shape[i, 0]*new_shape[i, 1])), axis=0)
+        temp = np.reshape(temp, (new_shape[i, 0], new_shape[i, 1], -1))
+        #print(temp.shape)
+        coeff_reshape.append(temp)
+        
+    return coeff_reshape
