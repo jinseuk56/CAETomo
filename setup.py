@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='CAETomo',
-    version='1.0.0',
+    version='1.0.1',
     description='1D-CAE embedded EELS tomography',
     author='Jinseok Ryu',
     author_email='jinseuk56@gmail.com',
