@@ -50,6 +50,18 @@ class tilt_series_alignment():
     def __init__(self, ref_adr, angles, img_adr=None):
         
         self.data_original = tifffile.imread(ref_adr)
+        
+        # Transpose/normalization logic: (tilts, height, width)
+        n_tilts = len(angles)
+        shape = self.data_original.shape
+        if len(shape) == 3:
+            if shape[0] == n_tilts:
+                pass
+            elif shape[2] == n_tilts:
+                self.data_original = np.transpose(self.data_original, (2, 0, 1))
+            elif shape[1] == n_tilts:
+                self.data_original = np.transpose(self.data_original, (1, 0, 2))
+
         self.data = self.data_original.copy()
         self.num_img = len(self.data)
         self.child_ = False
@@ -57,7 +69,15 @@ class tilt_series_alignment():
         if img_adr:
             self.child_ = True
             for adr in img_adr:
-                self.imgs.append(tifffile.imread(adr))
+                img_data = tifffile.imread(adr)
+                if len(img_data.shape) == 3:
+                    if img_data.shape[0] == n_tilts:
+                        pass
+                    elif img_data.shape[2] == n_tilts:
+                        img_data = np.transpose(img_data, (2, 0, 1))
+                    elif img_data.shape[1] == n_tilts:
+                        img_data = np.transpose(img_data, (1, 0, 2))
+                self.imgs.append(img_data)
         
         self.angles = angles
         
@@ -615,7 +635,7 @@ class tilt_series_alignment():
         aligned_p = []
         for i, slc in enumerate(self.data):
             M = np.float32([[1, 0, self.psh[i][1]], [0, 1, self.psh[i][0]]])
-            shifted = cv2.warpAffine(slc, M, slc.shape, borderMode=cv2.BORDER_REFLECT)
+            shifted = cv2.warpAffine(slc, M, (slc.shape[1], slc.shape[0]), borderMode=cv2.BORDER_REFLECT)
             aligned_p.append(shifted)
         self.aligned_p = np.asarray(aligned_p)
 
@@ -629,7 +649,7 @@ class tilt_series_alignment():
                 aligned_tmp = []
                 for i, slc in enumerate(data_tmp):
                     M = np.float32([[1, 0, self.psh[i][1]], [0, 1, self.psh[i][0]]])
-                    shifted = cv2.warpAffine(slc, M, slc.shape, borderMode=cv2.BORDER_REFLECT)
+                    shifted = cv2.warpAffine(slc, M, (slc.shape[1], slc.shape[0]), borderMode=cv2.BORDER_REFLECT)
                     aligned_tmp.append(shifted)
                 aligned_tmp = np.asarray(aligned_tmp)
                 self.imgs[j] = aligned_tmp
@@ -662,6 +682,10 @@ def radial_indices(shape, radial_range, center=None):
     r = np.hypot(y - center[0], x - center[1])
     ri = np.ones(r.shape)
     
+    # If High Cut is 0, the pass filter is not used
+    if radial_range[1] == 0:
+        return ri
+        
     if len(np.unique(radial_range)) > 1:
         ri[np.where(r <= radial_range[0])] = 0
         ri[np.where(r > radial_range[1])] = 0

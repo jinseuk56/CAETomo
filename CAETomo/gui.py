@@ -285,17 +285,32 @@ with tab_align:
     render_step_results('al_prep', log_al_prep, fig_al_prep, skip_figs=is_al_prep)
 
     st.write("---")
-    st.subheader("Filter Adjustments & Preview")
+    st.subheader("Filter Adjustments & Live Preview")
+
+    # Determine dynamic ranges/values if alignment model is initialized
+    if st.session_state.align_model is not None:
+        num_img = st.session_state.align_model.num_img
+        snum_max = max(1, num_img - 2)
+        snum_default = int(num_img / 2)
+        height, width = st.session_state.align_model.data_original.shape[1:3]
+        max_cutoff = max(width, height)
+    else:
+        num_img = 10
+        snum_max = 8
+        snum_default = 5
+        height, width = 512, 512
+        max_cutoff = 512
+
     f1, f2, f3, f4 = st.columns(4)
     with f1:
-        snum = st.number_input("Tilt Index", value=6, min_value=1, help="Index of the tilt image to use for previewing the filter effect.")
-        xp = st.number_input("X Position", value=0, help="Crop window X start coordinate for cross-correlation.")
-        yp = st.number_input("Y Position", value=0, help="Crop window Y start coordinate for cross-correlation.")
-        w = st.number_input("Width", value=256, help="Crop window width.")
-        h = st.number_input("Height", value=256, help="Crop window height.")
+        snum = st.slider("Tilt Index", min_value=1, max_value=snum_max, value=snum_default, help="Index of the tilt image to use for previewing the filter effect.")
+        xp = st.slider("X Position", min_value=0, max_value=width-1, value=0, help="Crop window X start coordinate for cross-correlation.")
+        yp = st.slider("Y Position", min_value=0, max_value=height-1, value=0, help="Crop window Y start coordinate for cross-correlation.")
+        w = st.slider("Width", min_value=1, max_value=width, value=width, help="Crop window width.")
+        h = st.slider("Height", min_value=1, max_value=height, value=height, help="Crop window height.")
     with f2:
-        lc = st.number_input("Low Cut-off", value=0, help="Low cut-off frequency for the radial bandpass filter.")
-        hc = st.number_input("High Cut-off", value=128, help="High cut-off frequency for the radial bandpass filter.")
+        lc = st.slider("Low Cut-off", min_value=0, max_value=max_cutoff, value=0, help="Low cut-off frequency for the radial bandpass filter.")
+        hc = st.slider("High Cut-off", min_value=0, max_value=max_cutoff, value=0, help="High cut-off frequency for the radial bandpass filter. (0 to bypass)")
         stretch_x = st.checkbox("X Stretch", value=False, help="Apply cosine stretching to compensate for the tilt angle projection (X-axis).")
         stretch_y = st.checkbox("Y Stretch", value=False, help="Apply cosine stretching to compensate for the tilt angle projection (Y-axis).")
     with f3:
@@ -308,14 +323,21 @@ with tab_align:
         sob_k = st.number_input("Sobel Kernel", value=0, help="Sobel edge detection filter kernel size.")
         sch_a = st.checkbox("Scharr Filter", value=False, help="Apply Scharr edge detection filter to emphasize structural boundaries.")
 
-    log_al_prev = st.empty(); fig_al_prev = st.container()
-    is_al_prev = False
-    if st.button("Preview Filter Impact"):
-        if st.session_state.align_model:
-            run_step('al_prev', log_al_prev, fig_al_prev, "Preview generated.", st.session_state.align_model.preview_streamlit_filter, int(snum), int(xp), int(yp), int(w), int(h), lc, hc, stretch_x, stretch_y, hw, int(gas_k), gas_s, gas_h, int(lap_k), int(sob_k), sch_a)
-            is_al_prev = True
-        else: st.warning("Prepare alignment first.")
-    render_step_results('al_prev', log_al_prev, fig_al_prev, skip_figs=is_al_prev)
+    log_al_prev = st.empty()
+    fig_al_prev = st.container()
+    if st.session_state.align_model and hasattr(st.session_state.align_model, 'fft_stack'):
+        with fig_al_prev:
+            try:
+                fig = st.session_state.align_model.preview_streamlit_filter(
+                    int(snum), int(xp), int(yp), int(w), int(h), lc, hc,
+                    stretch_x, stretch_y, hw, int(gas_k), gas_s, gas_h, int(lap_k), int(sob_k), sch_a
+                )
+                st.pyplot(fig)
+                plt.close(fig)
+            except Exception as e:
+                st.error(f"Error rendering filter preview: {e}")
+    else:
+        st.info("Prepare alignment first to see live filter preview.")
 
     st.write("---")
     
